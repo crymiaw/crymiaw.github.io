@@ -1,72 +1,1019 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ODIS weight sensitivity map</title>
-  <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <main>
-    <header>
-      <p class="eyebrow">North Carolina public high schools</p>
-      <h1>ODIS weight sensitivity map</h1>
-      <p class="subtitle">Adjust the five domain weights to see how each school community's 0–100 stress score changes, where the largest shifts cluster, and which conclusions remain stable.</p>
-    </header>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>The Personal Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&family=Syne:wght@700;800&display=swap">
+<style>
+/* Layout: a full-width shelf of academic course spines with four interactive objects among them. The one you point at slides to the centre; a click opens it. Projects open as a stack of paper folders, one per project. */
+:root{
+  --bg:#f2f2ef; --ink:#141413; --mute:#6c6b66; --line:#d8d7d1; --page:#fbfbf9;
+  --navy:#1f3558; --rose:#ee8f9d; --green:#2e6b47; --gold:#f1b62c;
+  --pink:#f3a9c6; --orange:#ee6a2c; --red:#df4538; --sage:#9bb3a0; --gray:#dcdcd9; --brown:#3a1c15; --char:#2b2b2a;
+  --s1:#2c5db5; --s2:#d9531e; --s3:#2e6b47;
+  --nav:64px;
+  --u:max(.5px, min(1.1px, calc((100vw - 40px) / 1060), calc((100svh - 340px) / 490)));
+  --display:'Cormorant Garamond','Times New Roman',serif;
+  --sans:'Inter',system-ui,sans-serif;
+  --grot:'Space Grotesk','Inter',sans-serif;
+  --cond:'Anton','Impact',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --wide:'Syne','Space Grotesk',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161615; --ink:#ecebe6; --mute:#9b9a93; --line:#34332f; --page:#1e1e1c;
+    --s1:#7aa2ee; --s2:#f2895c; --s3:#66bb8b; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161615; --ink:#ecebe6; --mute:#9b9a93; --line:#34332f; --page:#1e1e1c;
+  --s1:#7aa2ee; --s2:#f2895c; --s3:#66bb8b; color-scheme:dark;
+}
+@media (max-width:640px){
+  :root{ --u:calc((100vw - 32px) / 630); --nav:56px; }
+}
 
-    <section class="controls" aria-label="Domain weights">
-      <div class="controls-heading">
-        <div>
-          <h2>Domain weights</h2>
-          <p>Changing one weight proportionally adjusts the other four. The total remains 100%.</p>
-        </div>
-        <button id="reset" type="button">Reset to equal weights</button>
-      </div>
-      <div id="weight-controls" class="weight-grid"></div>
-    </section>
+*{ box-sizing:border-box; }
+body{ background:var(--bg); color:var(--ink); font-family:var(--sans); min-height:100svh; }
+body.reading{ overflow:hidden; }
+body::before{ content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--bg); z-index:45; }
+button{ font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; overflow:visible; }
 
-    <section class="summary" aria-live="polite">
-      <div><span id="mapped-count" class="metric"></span><span class="metric-label">mapped schools</span></div>
-      <div><span id="changed-five" class="metric"></span><span class="metric-label">changed by at least 5 score points</span></div>
-      <div><span id="median-shift" class="metric"></span><span class="metric-label">median absolute score change</span></div>
-    </section>
+/* ---------- top guide ---------- */
+.top{
+  position:fixed; top:env(safe-area-inset-top,0px); left:0; right:0; height:var(--nav); z-index:40;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));
+  background:var(--bg);
+}
+.mark{ font-family:var(--display); font-weight:500; font-size:22px; letter-spacing:.12em; }
+.top nav{ display:flex; gap:clamp(14px,3vw,36px); min-width:0; }
+.nv{ display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); padding:8px 0; border-bottom:1px solid transparent; transition:color .25s, border-color .25s; white-space:nowrap; }
+.nv i{ width:9px; height:9px; border-radius:50%; background:var(--c); flex:none; }
+.nv:hover,.nv.on{ color:var(--ink); border-bottom-color:var(--ink); }
+.nv:focus-visible,.mark:focus-visible,.back:focus-visible,.tabs button:focus-visible,.ftab:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+@media (max-width:640px){
+  .nv{ font-size:11px; letter-spacing:.08em; }
+  .nv i{ display:none; }
+  .opt{ display:none; }
+}
 
-    <section class="map-layout">
-      <div class="map-column">
-        <div class="map-toolbar">
-          <label for="color-mode">Map view</label>
-          <select id="color-mode">
-            <option value="stress">Current stress score</option>
-            <option value="change">Change from equal weights</option>
-            <option value="sensitivity">Weight sensitivity</option>
-          </select>
-          <div class="zoom-controls" aria-label="Map zoom">
-            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
-            <label for="zoom-slider">Zoom</label>
-            <input id="zoom-slider" type="range" min="1" max="8" step="0.1" value="1">
-            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
-            <button id="zoom-reset" type="button">Reset map</button>
-          </div>
-          <div id="legend" aria-label="Map legend"></div>
-        </div>
-        <div id="map" role="img" aria-label="Map of North Carolina school communities"></div>
-      </div>
-      <aside id="detail" aria-live="polite">
-        <h2>Select a school</h2>
-        <p>Click a school to compare its current Community Stress Score with the equal-weight reference and its sensitivity range.</p>
-      </aside>
-    </section>
+/* ---------- palette (shared by spine, cover, reader) ---------- */
+.b-about,.reader[data-book="about"]{ --c:var(--navy); --on:#fff; }
+.b-projects,.reader[data-book="projects"]{ --c:var(--rose); --on:#2b1016; }
+.b-skills,.reader[data-book="skills"]{ --c:var(--green); --on:#fff; }
+.b-certs,.reader[data-book="certs"]{ --c:var(--gold); --on:#1a1a1a; }
+.k-pink{ --c:var(--pink); --on:#1a1a1a; }
+.k-sage{ --c:var(--sage); --on:#1a1a1a; }
+.k-orange{ --c:var(--orange); --on:#fff; }
+.k-char{ --c:var(--char); --on:#f1f1ee; }
+.k-red{ --c:var(--red); --on:#fff; }
+.k-gray{ --c:var(--gray); --on:#111; }
+.k-brown{ --c:var(--brown); --on:#f3dfd2; }
 
-    <footer>
-      <p>The Community Stress Score is a 0–100 index of measured community conditions. Higher values indicate greater measured stress; the score is not a probability or a rating of school performance. Sensitivity uses 2,500 weight combinations with every domain constrained to 10%–40%.</p>
-    </footer>
-  </main>
+/* ---------- stage ---------- */
+.stage{
+  padding-top:calc(var(--nav) + 8px); padding-bottom:40px;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));
+  display:flex; flex-direction:column; align-items:center;
+}
+.head{ text-align:center; padding-top:clamp(8px,3vh,28px); }
+.part{ font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--mute); margin:0 0 14px; }
+h1{ font-family:var(--display); font-weight:300; text-transform:uppercase; font-size:clamp(38px,5.4vw,74px); line-height:.98; letter-spacing:-.005em; margin:0; text-wrap:balance; }
 
-  <div id="tooltip" role="tooltip" hidden></div>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-  <script src="data.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+.shelf{
+  position:relative; display:flex; align-items:flex-end; justify-content:center;
+  gap:calc(var(--u)*8); width:100%; max-width:calc(var(--u)*1100);
+  height:calc(var(--u)*490); margin-top:clamp(0px,1vh,16px);
+  border-bottom:1px solid var(--ink);
+}
+.row{ display:contents; }
+.floor{ position:absolute; left:50%; bottom:calc(var(--u)*-10); width:calc(var(--u)*340); height:calc(var(--u)*26); transform:translateX(-50%);
+  background:radial-gradient(ellipse at center, rgba(0,0,0,.38), transparent 70%); opacity:0; transition:opacity .5s; pointer-events:none; }
+.shelf.has-active .floor{ opacity:1; }
+@media (max-width:640px){
+  .shelf{ height:auto; flex-direction:column; align-items:center; gap:calc(var(--u)*36); border-bottom:0; margin-top:12px; }
+  .row{ display:flex; align-items:flex-end; justify-content:center; gap:calc(var(--u)*8); width:100%; border-bottom:1px solid var(--ink); }
+  .floor{ display:none; }
+}
+
+.slot{
+  --T:calc(var(--u)*var(--w)); --H:calc(var(--u)*var(--h)); --D:calc(var(--u)*var(--d,200));
+  position:relative; flex:none; width:var(--T); height:var(--H); z-index:1;
+  transition:opacity .45s, transform .35s;
+}
+.shelf.has-active .slot:not(.active){ opacity:.28; }
+.slot.active{ z-index:20; }
+.slot:focus-visible{ outline:2px solid var(--ink); outline-offset:5px; }
+
+/* thin decorative spines */
+.decor{ cursor:default; }
+.decor:hover{ transform:translateY(-6px); }
+.flat{ display:flex; flex-direction:column; align-items:center; justify-content:space-between; width:100%; height:100%; background:var(--c); color:var(--on); padding:calc(var(--u)*14) 0; overflow:hidden; }
+.flat .t{ writing-mode:vertical-rl; transform:rotate(180deg); font-family:var(--grot); font-weight:700; font-size:max(9px, calc(var(--u)*13)); letter-spacing:.14em; text-transform:uppercase; white-space:nowrap; margin:auto 0; }
+.flat .t.cond{ font-family:var(--cond); font-weight:400; font-size:max(12px, calc(var(--u)*26)); letter-spacing:.04em; }
+.flat .t.wide{ letter-spacing:.42em; }
+.flat .rule{ width:55%; height:2px; background:currentColor; opacity:.5; }
+.flat .ring{ width:calc(var(--u)*11); height:calc(var(--u)*11); border:2px solid currentColor; border-radius:50%; opacity:.7; }
+
+/* the four oversized objects: a 3D box with a spine face and a cover face */
+button.slot{ cursor:pointer; --sc:1.12; }
+.book{
+  position:absolute; inset:0; display:block; transform-style:preserve-3d;
+  transition:transform .8s cubic-bezier(.22,.82,.2,1);
+  transform:translate(0px,0px) perspective(1400px) translateZ(calc(var(--D) / -2)) rotateY(0deg) scale(1);
+}
+.slot.active .book{
+  transform:translate(var(--dx,0px), calc(var(--H) * (var(--sc) - 1) / -2)) perspective(1400px) translateZ(calc(var(--T) / -2)) rotateY(-90deg) scale(var(--sc));
+}
+.face{ position:absolute; top:0; height:100%; backface-visibility:hidden; overflow:hidden; background:var(--c); color:var(--on); display:flex; }
+.spine{ left:0; width:100%; transform:translateZ(calc(var(--D) / 2)); flex-direction:column; align-items:center; justify-content:space-between; padding:calc(var(--u)*16) 0; }
+.spine .t{ writing-mode:vertical-rl; transform:rotate(180deg); font-family:var(--grot); font-weight:700; font-size:max(11px, calc(var(--u)*var(--fs,17))); letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; margin:auto 0; }
+.spine .dot{ width:calc(var(--u)*13); height:calc(var(--u)*13); border:2px solid currentColor; border-radius:50%; display:block; }
+.spine .ini{ font-family:var(--display); font-weight:500; font-size:max(10px, calc(var(--u)*17)); letter-spacing:.08em; }
+.cover{
+  left:calc((var(--T) - var(--D)) / 2); width:var(--D);
+  transform:rotateY(90deg) translateZ(calc(var(--T) / 2));
+  flex-direction:column; justify-content:space-between; padding:calc(var(--u)*22);
+  box-shadow:inset calc(var(--u)*10) 0 calc(var(--u)*12) calc(var(--u)*-8) rgba(0,0,0,.3);
+  opacity:0; transition:opacity .15s .6s;
+}
+.slot.active .cover{ opacity:1; transition-delay:0s; }
+.cover .ck{ font-size:max(8px, calc(var(--u)*11)); letter-spacing:.2em; text-transform:uppercase; opacity:.8; }
+.cover .ct{ font-family:var(--display); font-weight:400; font-size:calc(var(--u)*34); line-height:1; }
+
+/* About: thick hardback */
+.sp-about{ --fs:26; }
+.sp-about::before,.sp-about::after{ content:""; position:absolute; left:20%; right:20%; height:2px; background:currentColor; opacity:.5; }
+.sp-about::before{ top:calc(var(--u)*56); }
+.sp-about::after{ bottom:calc(var(--u)*56); }
+.sp-projects{
+  --fs:18; overflow:visible;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.16) 0 1px,transparent 1px calc(var(--u)*4)),linear-gradient(180deg,#f2a0ac,#e8808f);
+  box-shadow:inset calc(var(--u)*-7) 0 calc(var(--u)*10) calc(var(--u)*-7) rgba(82,17,31,.35);
+}
+.sp-projects::before{
+  content:""; position:absolute; z-index:3; left:7%; right:7%; top:0; height:calc(var(--u)*18);
+  background:linear-gradient(90deg,#f6d55c 0 14%,#a6d96a 14% 28%,#66c2a5 28% 42%,#5aa9e6 42% 56%,#8e8ee6 56% 70%,#e68ac8 70% 84%,#f4a259 84%);
+  border-radius:0 0 calc(var(--u)*3) calc(var(--u)*3);
+}
+.sp-projects::after{
+  content:""; position:absolute; left:7%; right:7%; bottom:0; height:calc(var(--u)*20);
+  background:radial-gradient(circle,rgba(0,0,0,.18) .6px,transparent 1.1px) 0 0 / calc(var(--u)*5) calc(var(--u)*5),rgba(255,255,255,.75);
+}
+.sp-projects .project-cord{
+  position:absolute; z-index:1; inset:18% 18% 14%;
+  background:linear-gradient(76deg,transparent 48.6%,rgba(255,255,255,.92) 49% 51%,transparent 51.4%),linear-gradient(-76deg,transparent 48.6%,rgba(255,255,255,.92) 49% 51%,transparent 51.4%);
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));
+}
+.sp-projects .t{ position:relative; z-index:2; color:#35151d; background:rgba(255,255,255,.9); border:1px solid rgba(117,37,53,.18); padding:calc(var(--u)*10) calc(var(--u)*5); box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(0,0,0,.12); }
+.sp-projects .ini{ position:relative; z-index:4; color:#35151d; }
+.cv-about{ gap:calc(var(--u)*18); }
+.about-cover-copy{
+  flex:1; width:100%; border:1px solid rgba(255,255,255,.38); padding:calc(var(--u)*18);
+  display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*15);
+  font-family:var(--display); text-align:left;
+}
+.about-cover-copy small{ font:500 max(7px,calc(var(--u)*9))/1.35 var(--sans); letter-spacing:.13em; text-transform:uppercase; opacity:.78; }
+.about-cover-copy b{ font-weight:400; font-size:calc(var(--u)*28); line-height:.92; }
+.about-cover-copy em{ font-weight:300; opacity:.7; }
+
+/* Skills & Methods: spiral notebook */
+.sp-note{ padding:0; display:block; }
+.sp-note::before{ content:""; position:absolute; top:calc(var(--u)*10); bottom:calc(var(--u)*10); left:16%; right:16%; border-radius:calc(var(--u)*2);
+  background:repeating-linear-gradient(to bottom, #dde2df 0 calc(var(--u)*4), transparent calc(var(--u)*4) calc(var(--u)*13)); }
+.sp-note .tape{ position:absolute; left:26%; right:26%; top:calc(var(--u)*44); bottom:calc(var(--u)*44); background:#f6f1e2; display:flex; align-items:center; justify-content:center; box-shadow:0 1px calc(var(--u)*3) rgba(0,0,0,.3); }
+.sp-note .tape .t{ color:#14301f; font-size:max(10px, calc(var(--u)*17)); margin:0; letter-spacing:.1em; }
+.cv-note{
+  background-color:var(--c);
+  background-image:linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px);
+  background-size:calc(var(--u)*16) calc(var(--u)*16);
+  border-radius:0 calc(var(--u)*12) calc(var(--u)*12) 0; padding-left:calc(var(--u)*46);
+}
+.cv-note::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:calc(var(--u)*30);
+  background:radial-gradient(circle at 50% 50%, rgba(0,0,0,.6) 0 calc(var(--u)*3.2), transparent calc(var(--u)*3.8)) 0 0 / 100% calc(var(--u)*13) repeat-y; }
+.cv-note::after{ content:""; position:absolute; left:calc(var(--u)*-6); top:0; bottom:0; width:calc(var(--u)*32);
+  background:repeating-linear-gradient(to bottom, transparent 0 calc(var(--u)*4.8), #dde2df calc(var(--u)*4.8) calc(var(--u)*8.2), transparent calc(var(--u)*8.2) calc(var(--u)*13)); }
+.cv-note .lab{ position:relative; z-index:1; background:#f6f1e2; color:#14301f; margin:auto 0; padding:calc(var(--u)*16); transform:rotate(-1.5deg); box-shadow:0 calc(var(--u)*3) calc(var(--u)*8) rgba(0,0,0,.25); }
+.cv-note .lab b{ display:block; font-family:var(--grot); font-weight:700; font-size:calc(var(--u)*27); line-height:1.04; }
+.cv-note .lab small{ display:block; margin-top:calc(var(--u)*10); font-size:max(8px, calc(var(--u)*10)); letter-spacing:.14em; text-transform:uppercase; color:#4a5b50; }
+.cv-note .ck{ position:relative; z-index:1; }
+
+/* front-facing objects (file, frame): no spine, they just come forward */
+button.slot.is-front{ --sc:1.35; }
+.is-front .book{ transform:translate(0px,0px) perspective(1400px) rotateY(0deg) scale(1); }
+.slot.is-front.active .book{ transform:translate(var(--dx,0px), calc(var(--H) * (var(--sc) - 1) / -2)) perspective(1400px) rotateY(0deg) scale(var(--sc)); }
+.is-front .cover{ left:0; width:100%; transform:none; opacity:1; overflow:visible; display:block; padding:0; background:none; box-shadow:none; }
+
+/* Projects: expanding file (translucent plastic, rainbow tabs, elastic closure) */
+.cv-file{ container-type:inline-size; }
+.cv-file .fshell{ position:absolute; left:0; right:0; top:3cqw; bottom:0; border-radius:1cqw;
+  background:linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.58));
+  border:1px solid rgba(255,255,255,.95); box-shadow:0 2cqw 4cqw rgba(0,0,0,.18); }
+.cv-file .rb{ position:absolute; left:7cqw; right:7cqw; top:2.4cqw; height:7cqw; display:flex; gap:.5cqw; z-index:1; }
+.cv-file .rb i{ flex:1; border-radius:.9cqw .9cqw 0 0; background:var(--tc); transition:transform .45s cubic-bezier(.2,.8,.2,1); transition-delay:calc(var(--k) * 45ms); }
+.slot.active .cv-file .rb i{ transform:translateY(-1.7cqw); }
+.cv-file .fpink{ position:absolute; left:2.4cqw; right:2.4cqw; top:9cqw; bottom:7.5cqw; border-radius:.8cqw .8cqw 0 0;
+  background:repeating-linear-gradient(to bottom, rgba(255,255,255,.16) 0 1px, transparent 1px 2.6cqw), linear-gradient(180deg,#f2a0ac,#e8808f); }
+.cv-file .fpink::after{ content:""; position:absolute; left:0; right:0; bottom:0; height:3.2cqw; background:rgba(120,20,40,.2); }
+.cv-file .lbl{ position:absolute; left:17cqw; right:17cqw; top:16cqw; height:22cqw; background:#fff; color:#1b1b1b; border:1px solid #d9dde6; box-shadow:0 .4cqw 1.2cqw rgba(0,0,0,.14);
+  padding:2cqw 2.4cqw; background-image:repeating-linear-gradient(to bottom, transparent 0 3.6cqw, #cfd8ea 3.6cqw calc(3.6cqw + 1px)); background-position:0 5.5cqw; background-repeat:repeat-y; }
+.cv-file .lbl b{ display:block; font-family:var(--display); font-weight:500; font-size:6.4cqw; line-height:1; background:#fff; width:max-content; padding-right:1.6cqw; }
+.cv-file .lbl small{ display:block; margin-top:1.4cqw; font-family:var(--mono); font-size:max(6px, 1.7cqw); letter-spacing:.06em; text-transform:uppercase; color:#555; background:#fff; width:max-content; padding-right:1cqw; }
+.cv-file .cord{ position:absolute; left:37cqw; width:26cqw; top:32cqw; height:40cqw; overflow:visible; }
+.cv-file .cord path{ fill:none; stroke:#fff; stroke-width:2px; stroke-linecap:round; vector-effect:non-scaling-stroke; filter:drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+.cv-file .btn{ position:absolute; left:50%; top:52cqw; width:5.2cqw; height:5.2cqw; margin:-2.6cqw 0 0 -2.6cqw; border-radius:50%; background:rgba(255,255,255,.92); box-shadow:0 .3cqw .8cqw rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.08); }
+.cv-file .gus{ position:absolute; left:2.4cqw; right:2.4cqw; bottom:1cqw; height:6cqw; border-radius:0 0 .6cqw .6cqw;
+  background:radial-gradient(circle, rgba(0,0,0,.2) .6px, transparent 1.1px) 0 0 / 1.7cqw 1.7cqw, rgba(255,255,255,.92); }
+
+/* The project archive stands vertically like the other volumes on the shelf. */
+.b-projects .cv-file .fshell{ left:3cqw; right:3cqw; top:8cqw; bottom:0; border-radius:2cqw; }
+.b-projects .cv-file .rb{ left:9cqw; right:9cqw; top:3.5cqw; height:9cqw; gap:1cqw; }
+.b-projects .cv-file .fpink{ left:5cqw; right:5cqw; top:11cqw; bottom:5cqw; border-radius:1.5cqw 1.5cqw 0 0; }
+.b-projects .cv-file .fpink::after{ height:6cqw; }
+.b-projects .cv-file .lbl{ left:13cqw; right:13cqw; top:35%; height:35cqw; padding:4cqw; background-position:0 9cqw; background-image:repeating-linear-gradient(to bottom, transparent 0 6cqw, #cfd8ea 6cqw calc(6cqw + 1px)); }
+.b-projects .cv-file .lbl b{ font-size:10cqw; padding-right:2cqw; }
+.b-projects .cv-file .lbl small{ margin-top:3cqw; font-size:max(7px,3cqw); line-height:1.45; white-space:normal; }
+.b-projects .cv-file .cord{ left:37cqw; width:26cqw; top:30%; height:45%; }
+.b-projects .cv-file .btn{ top:52%; width:8cqw; height:8cqw; margin:-4cqw 0 0 -4cqw; }
+.b-projects .cv-file .gus{ left:5cqw; right:5cqw; bottom:1.5cqw; height:8cqw; }
+.b-projects .cv-file .lbl{ display:grid; place-items:center; }
+
+/* Certificates: framed certificate (container units so it scales anywhere) */
+.certframe{
+  display:block; position:relative; width:100%; aspect-ratio:1.414; container-type:inline-size;
+  background:#111; border-radius:2px; box-shadow:0 12px 28px rgba(0,0,0,.28);
+}
+.cv-frame .certframe{ height:100%; aspect-ratio:auto; }
+.cert{
+  --cc:#d4533a; --ln:rgba(206,70,48,.78);
+  position:absolute; inset:2.1cqw; overflow:hidden; color:var(--cc); font-family:var(--mono);
+  background:radial-gradient(90% 70% at 18% 8%, rgba(255,255,200,.9), transparent 62%), linear-gradient(120deg,#e8e96c,#dde46d 55%,#e6e772);
+}
+.cert .hl,.cert .vl{ position:absolute; background:var(--ln); display:block; }
+.cert .hl{ height:1px; transform-origin:0 50%; }
+.cert .vl{ width:1px; transform-origin:50% 0; }
+.cert .circ{ position:absolute; border:1px solid var(--ln); border-radius:50%; display:block; }
+.cert .cdot{ position:absolute; border-radius:50%; background:#c8372d; display:block; }
+.cert .org{ position:absolute; left:11%; top:8%; font-size:max(6px, 1.7cqw); letter-spacing:.04em; }
+.cert .ttl{ position:absolute; left:11%; top:20%; font-family:var(--wide); font-weight:800; font-size:7.4cqw; line-height:1.04; letter-spacing:-.01em; color:#dc5a3a; background:linear-gradient(95deg,#d4472f,#ee7c3a); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.cert .giv{ position:absolute; left:30%; top:48%; font-size:max(6px, 1.6cqw); }
+.cert .nm{ position:absolute; left:30%; top:54%; font-family:var(--wide); font-weight:700; font-size:4.6cqw; line-height:1; color:#d4533a; }
+.cert .bl{ position:absolute; left:30%; top:65%; width:58%; font-size:max(6px, 1.5cqw); line-height:1.5; }
+.cert .sg{ position:absolute; top:75%; font-size:max(6px, 1.5cqw); line-height:1.5; }
+.cert .sg b{ display:block; margin-top:3.4cqw; padding-top:.8cqw; border-top:1px solid var(--ln); font-weight:500; }
+.cert .glare{ position:absolute; inset:-10% -40%; background:linear-gradient(105deg, transparent 38%, rgba(255,255,255,.6) 50%, transparent 62%); transform:translateX(-130%); pointer-events:none; }
+@keyframes drawx{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+@keyframes drawy{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+@keyframes sweep{ from{ transform:translateX(-130%); } to{ transform:translateX(130%); } }
+@keyframes rise{ from{ opacity:0; transform:translateY(1.6cqw); } to{ opacity:1; transform:none; } }
+.slot.active .cert .hl,.reader.open .cert .hl{ animation:drawx .9s cubic-bezier(.6,0,.2,1) both; }
+.slot.active .cert .vl,.reader.open .cert .vl{ animation:drawy .9s cubic-bezier(.6,0,.2,1) both; }
+.slot.active .cert .glare,.reader.open .cert .glare{ animation:sweep 1.5s .35s ease-in-out both; }
+.slot.active .cert .ttl,.reader.open .cert .ttl{ animation:rise .8s .15s both; }
+.slot.active .cert .nm,.reader.open .cert .nm{ animation:rise .8s .45s both; }
+.reader.open .cert .hl,.reader.open .cert .vl{ animation-delay:.9s; }
+.reader.open .cert .glare{ animation-delay:1.5s; }
+.reader.open .cert .ttl{ animation-delay:1s; }
+.reader.open .cert .nm{ animation-delay:1.3s; }
+
+.hint{ margin:18px 0 0; min-height:1.4em; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--mute); text-align:center; }
+
+/* ---------- reader (opened book) ---------- */
+.reader{
+  position:fixed; left:0; right:0; bottom:0; top:calc(var(--nav) + env(safe-area-inset-top,0px)); z-index:30;
+  background:var(--c); color:var(--on); visibility:hidden;
+  display:grid; grid-template-columns:minmax(240px,32%) 1fr;
+  clip-path:inset(var(--ct,50%) var(--cr,50%) var(--cb,50%) var(--cl,50%));
+  transition:clip-path .8s cubic-bezier(.76,0,.24,1), background-color .4s;
+}
+.reader.show{ visibility:visible; }
+.reader.open{ clip-path:inset(0 0 0 0); }
+.lp{
+  display:flex; flex-direction:column; justify-content:space-between; gap:24px; min-width:0;
+  padding:clamp(24px,4vw,48px) 28px clamp(24px,4vw,48px) max(24px, env(safe-area-inset-left,0px));
+  opacity:0; transition:opacity .2s;
+}
+.reader.open .lp{ opacity:1; transition:opacity .45s .6s; }
+.lp-k{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; opacity:.75; margin:0 0 18px; }
+.lp h2{ font-family:var(--display); font-weight:300; text-transform:uppercase; font-size:clamp(36px,4.6vw,66px); line-height:.98; margin:0 0 16px; text-wrap:balance; overflow-wrap:anywhere; }
+.lp-s{ font-size:14px; line-height:1.55; max-width:26ch; opacity:.88; margin:0; }
+.back{ align-self:flex-start; font-size:12px; letter-spacing:.14em; text-transform:uppercase; padding:10px 0; border-bottom:1px solid currentColor; }
+.paper{
+  background:var(--page); color:var(--ink); overflow:auto; min-width:0;
+  clip-path:inset(0 100% 0 0); transition:clip-path .25s;
+}
+.reader.open .paper{ clip-path:inset(0 0 0 0); transition:clip-path .75s cubic-bezier(.7,0,.2,1) .5s; }
+.doc{
+  max-width:820px; padding:clamp(28px,5vw,60px) max(24px, env(safe-area-inset-right,0px)) calc(72px + env(safe-area-inset-bottom,0px)) clamp(24px,5vw,64px);
+  transition:opacity .22s;
+}
+.reader.swap .doc{ opacity:0; }
+.doc .eyebrow{ font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--mute); margin:0 0 12px; }
+.doc h2{ font-family:var(--display); font-weight:400; font-size:clamp(32px,4vw,48px); line-height:1.05; margin:0 0 24px; text-wrap:balance; }
+.doc h3{ font-family:var(--display); font-weight:500; font-size:26px; line-height:1.1; margin:36px 0 10px; }
+.doc p{ font-size:16px; line-height:1.68; margin:0 0 14px; max-width:62ch; }
+.doc .lead{ font-size:19px; line-height:1.55; }
+.doc .two{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,260px); gap:clamp(24px,4vw,48px); align-items:start; }
+.doc aside{ border-top:1px solid var(--line); padding-top:4px; }
+.doc dl{ margin:20px 0 0; display:grid; gap:12px; font-size:14px; }
+.doc dt{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--mute); margin-bottom:2px; }
+.doc dd{ margin:0; overflow-wrap:anywhere; user-select:all; }
+.tabs{ display:flex; flex-wrap:wrap; gap:6px 22px; border-bottom:1px solid var(--line); margin:0 0 26px; }
+.tabs button{ padding:10px 0; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); border-bottom:2px solid transparent; margin-bottom:-1px; }
+.tabs button[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--ink); }
+.chart{ margin:0 0 8px; }
+.chart svg{ width:100%; height:auto; display:block; }
+.chart text{ fill:var(--mute); font:11px var(--sans); }
+.chart .lbl{ font-weight:600; font-size:12px; }
+.cap{ font-size:13px !important; color:var(--mute); }
+.project-badge{ display:inline-flex; align-items:center; margin:0 0 18px; padding:7px 11px; border:1px solid var(--line); border-radius:99px; font:600 12px var(--grot); letter-spacing:.04em; }
+.odis-question-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:26px 0 10px; }
+.odis-question{ margin:0 !important; padding:18px; border:1px solid var(--line); border-radius:6px; font-family:var(--display); font-size:20px !important; line-height:1.3 !important; }
+.odis-figure{ margin:0 0 28px; }
+.odis-figure img{ display:block; width:100%; height:auto; border:1px solid var(--line); background:#fff; }
+.odis-figure figcaption{ margin-top:9px; color:var(--mute); font-size:14px; line-height:1.55; }
+.odis-figure-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.odis-code-block{ margin:0 0 26px; }
+.odis-code-block h3{ margin:0 0 8px; font-size:22px; }
+.odis-code-block>p{ color:var(--mute); font-size:14px; }
+.odis-code{ margin:12px 0 0; padding:20px; overflow:auto; border-radius:6px; background:#18211f; color:#f3f4ef; font:13px/1.65 var(--mono); tab-size:2; }
+.odis-code .kw{ color:#f3b36b; }
+.odis-code .fn{ color:#8bc7bf; }
+.odis-code .num{ color:#e8d67a; }
+.odis-code .str{ color:#e7a8b7; }
+.odis-map-shell{ overflow:hidden; border:1px solid var(--line); background:#f4f7f6; }
+.odis-map-shell iframe{ display:block; width:100%; height:650px; border:0; background:#f4f7f6; }
+.odis-map-actions{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin:12px 0 0; }
+.odis-map-actions a{ display:inline-flex; align-items:center; min-height:40px; padding:9px 14px; border:1px solid var(--ink); border-radius:99px; color:var(--ink); font:600 13px var(--grot); text-decoration:none; }
+.odis-map-actions a:hover,.odis-map-actions a:focus-visible{ background:var(--ink); color:var(--page); }
+.odis-map-actions p{ margin:0 !important; font-size:13px !important; color:var(--mute); }
+.hate-viz-frame{ padding:14px; border:1px solid var(--line); background:#fff; }
+.hate-viz-frame img{ display:block; width:100%; height:auto; }
+.hate-replay{ display:inline-flex; align-items:center; gap:8px; margin:10px 0 0; padding:8px 12px; border:1px solid var(--ink); border-radius:99px; color:var(--ink); font:600 12px var(--grot); }
+.hate-replay:hover,.hate-replay:focus-visible{ background:var(--ink); color:var(--page); }
+.hate-model-grid,.hate-event-grid{ display:grid; gap:18px; }
+.hate-model-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); margin:0 0 30px; }
+.hate-event-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+.hate-model-grid figure,.hate-event-grid figure,.hate-viz-hero{ min-width:0; margin:0; }
+.hate-model-grid img,.hate-event-grid img{ display:block; width:100%; height:auto; border:1px solid var(--line); background:#fff; }
+.hate-model-grid figcaption,.hate-event-grid figcaption,.hate-viz-hero figcaption{ margin-top:8px; color:var(--mute); font-size:13px; line-height:1.5; }
+.hate-section-title{ margin:30px 0 12px !important; font-size:22px !important; }
+.stress-slide{ margin:0 0 26px; }
+.stress-slide img{ display:block; width:100%; height:auto; border:1px solid var(--line); background:#fff; }
+.stress-slide figcaption{ margin-top:9px; color:var(--mute); font-size:14px; line-height:1.55; }
+.rows{ list-style:none; margin:0; padding:0; border-top:1px solid var(--line); }
+.rows li{ display:grid; grid-template-columns:84px minmax(0,1fr); gap:6px 20px; padding:16px 0; border-bottom:1px solid var(--line); }
+.rows .y{ font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--mute); padding-top:3px; }
+.rows b{ display:block; font-family:var(--display); font-weight:500; font-size:22px; line-height:1.15; margin-bottom:4px; }
+.rows span.s{ font-size:14px; color:var(--mute); line-height:1.5; }
+.chips{ display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 4px; }
+.chips span{ font-family:var(--grot); font-weight:500; font-size:13px; padding:6px 12px; border:1px solid var(--line); border-radius:99px; }
+.grid2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 clamp(24px,4vw,48px); }
+.group{ margin:0 0 22px; }
+.group h4{ font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--mute); margin:0 0 8px; font-weight:500; }
+.cfslot{ max-width:680px; margin:0 0 34px; }
+.cert-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.cert-card{ width:100%; padding:0; overflow:hidden; border:1px solid var(--line); border-radius:7px; background:#fff; cursor:zoom-in; }
+.cert-card:last-child:nth-child(odd){ grid-column:1/-1; width:calc(50% - 9px); justify-self:center; }
+.cert-card:hover{ border-color:var(--ink); }
+.cert-card:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+.cert-visual{ aspect-ratio:792/612; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#f4f4f0; border-bottom:1px solid var(--line); }
+.cert-visual img{ display:block; width:100%; height:100%; object-fit:contain; }
+.cert-lightbox{ position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:clamp(58px,7vh,82px) clamp(12px,4vw,48px) clamp(18px,4vh,40px); overflow:auto; background:rgba(16,18,17,.9); cursor:zoom-out; }
+.cert-lightbox[hidden]{ display:none; }
+.cert-lightbox img{ display:block; max-width:min(calc(100vw - 24px),1400px); max-height:calc(100vh - 112px); width:auto; height:auto; object-fit:contain; background:#fff; box-shadow:0 20px 60px rgba(0,0,0,.34); }
+.cert-lightbox-close{ position:fixed; top:18px; right:22px; width:42px; height:42px; border:1px solid rgba(255,255,255,.7); border-radius:50%; color:#fff; background:rgba(0,0,0,.25); font:24px/1 var(--grot); }
+.cert-lightbox-close:hover,.cert-lightbox-close:focus-visible{ background:#fff; color:#111; }
+
+/* project folders: a stack of paper folders, each one a project */
+.stack{ --band:52px; --tabh:26px; position:relative; isolation:isolate; margin-top:calc(var(--tabh) + 8px); transition:height .55s cubic-bezier(.7,0,.2,1); }
+.fold{
+  position:absolute; left:0; right:0; top:calc(var(--p) * var(--band)); bottom:0; z-index:var(--p);
+  background:var(--fc); color:#1b1b1b; border-radius:8px 8px 0 0; box-shadow:0 -3px 8px rgba(0,0,0,.12);
+  transition:top .55s cubic-bezier(.7,0,.2,1);
+}
+.fold:not(.front){ cursor:pointer; }
+.fold:not(.front):hover{ filter:brightness(1.04); }
+.ftab{
+  position:absolute; top:calc(var(--tabh) * -1 + 1px); height:var(--tabh); left:min(var(--tx), calc(100% - 128px)); width:min(max(22%, 124px), 100%);
+  padding:0 14px; background:var(--fc); border-radius:10px 10px 0 0; text-align:left;
+  font:500 11px/1 var(--grot); letter-spacing:.1em; text-transform:uppercase; color:#1b1b1b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.fbody{ display:none; margin:20px 14px 14px; padding:clamp(18px,3vw,30px); background:var(--page); color:var(--ink); border-radius:3px; }
+.fold.front .fbody{ display:block; animation:fin .45s .25s both; }
+@keyframes fin{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.fbody .ph{ font-family:var(--display); font-weight:500; font-size:clamp(28px,3.4vw,40px); line-height:1.05; margin:0 0 4px; }
+.fbody .psub{ color:var(--mute); margin:0 0 22px; font-size:15px; }
+@media (max-width:640px){
+  .stack{ --band:46px; --tabh:24px; }
+  .ftab{ font-size:10px; padding:0 10px; }
+  .odis-question-grid,.odis-figure-grid,.hate-model-grid,.hate-event-grid{ grid-template-columns:1fr; }
+  .odis-map-shell iframe{ height:560px; }
+  .odis-map-actions{ align-items:flex-start; flex-direction:column; }
+}
+
+@media (max-width:820px){
+  .reader{ grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr); }
+  .lp{ padding:20px max(20px, env(safe-area-inset-right,0px)) 18px max(20px, env(safe-area-inset-left,0px)); gap:12px; flex-direction:row; align-items:flex-end; }
+  .lp h2{ font-size:clamp(30px,9vw,44px); margin:0; }
+  .lp-k,.lp-s{ display:none; }
+  .back{ flex:none; }
+  .doc .two,.grid2,.cert-grid{ grid-template-columns:minmax(0,1fr); }
+  .cert-card:last-child:nth-child(odd){ grid-column:auto; width:100%; }
+  .doc aside{ max-width:220px; }
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ transition-duration:.01ms !important; transition-delay:0s !important; animation-duration:.01ms !important; animation-delay:0s !important; }
+}
+</style>
+
+<header class="top">
+  <button class="mark" id="mark" aria-label="Back to the shelf">Yixuan Wang</button>
+  <nav id="nav" aria-label="Sections">
+    <button class="nv b-about" data-id="about"><i></i>About Me</button>
+    <button class="nv b-projects" data-id="projects"><i></i>Projects</button>
+    <button class="nv b-skills" data-id="skills"><i></i>Skills<span class="opt">&nbsp;&amp; Methods</span></button>
+    <button class="nv b-certs" data-id="certs"><i></i>Certificates</button>
+  </nav>
+</header>
+
+<main class="stage">
+  <div class="head">
+    <p class="part">Portfolio</p>
+    <h1>The Personal<br>Library</h1>
+  </div>
+
+  <div class="shelf" id="shelf">
+    <div class="floor"></div>
+
+    <div class="row">
+      <div class="slot decor k-pink" style="--w:30;--h:250" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Data Science</span></span></div>
+      <div class="slot decor k-orange" style="--w:34;--h:280" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Stochastic Modeling</span></span></div>
+
+      <!-- About me: thick hardback -->
+      <button class="slot b-about" data-id="about" style="--w:120;--h:400;--d:260" aria-label="About me">
+        <span class="book">
+          <span class="face spine sp-about"><i class="dot"></i><span class="t">About me</span><b class="ini">Yixuan Wang</b></span>
+          <span class="face cover cv-about">
+            <span class="ck">Portfolio</span>
+            <span class="about-cover-copy">
+              <small>University of North Carolina<br>at Chapel Hill</small>
+              <b>Statistics<br><em>&amp;</em> Economics</b>
+              <small>B.S. &middot; 2026</small>
+            </span>
+            <span class="ct">About me</span>
+          </span>
+        </span>
+      </button>
+
+      <div class="slot decor k-pink" style="--w:30;--h:320" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Introduction to Deep Learning</span></span></div>
+    </div>
+
+    <div class="row">
+      <!-- Projects: expanding file -->
+      <button class="slot b-projects" data-id="projects" style="--w:76;--h:370;--d:270" aria-label="Projects">
+        <span class="book">
+          <span class="face spine sp-projects"><i class="project-cord"></i><span class="t">Projects</span><b class="ini">02</b></span>
+          <span class="face cover cv-file">
+            <i class="fshell"></i>
+            <span class="rb">
+              <i style="--k:0;--tc:#f6d55c"></i><i style="--k:1;--tc:#a6d96a"></i><i style="--k:2;--tc:#66c2a5"></i><i style="--k:3;--tc:#5aa9e6"></i><i style="--k:4;--tc:#8e8ee6"></i><i style="--k:5;--tc:#e68ac8"></i><i style="--k:6;--tc:#f4a259"></i>
+            </span>
+            <i class="fpink"></i>
+            <span class="lbl"><b>Projects</b></span>
+            <svg class="cord" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M6 2 C 40 30 60 70 94 98"/><path d="M94 2 C 60 30 40 70 6 98"/></svg>
+            <i class="btn"></i>
+            <i class="gus"></i>
+          </span>
+        </span>
+      </button>
+
+      <div class="slot decor k-red" style="--w:28;--h:280" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Decision Analytics</span></span></div>
+      <div class="slot decor k-gray" style="--w:34;--h:300" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Econometrics</span></span></div>
+
+      <!-- Certificates: framed certificate -->
+      <button class="slot is-front b-certs" data-id="certs" style="--w:270;--h:191" aria-label="Certificates">
+        <span class="book">
+          <span class="face cover cv-frame">
+            <span class="certframe"><span class="cert">
+              <i class="hl" style="top:14%;left:9%;right:9%"></i>
+              <i class="hl" style="top:70%;left:9%;right:9%"></i>
+              <i class="hl" style="top:91%;left:9%;right:9%"></i>
+              <i class="vl" style="left:9%;top:14%;bottom:9%"></i>
+              <i class="vl" style="left:29%;top:4%;bottom:9%"></i>
+              <i class="vl" style="left:91%;top:4%;bottom:9%"></i>
+              <i class="circ" style="left:68%;top:-16%;width:32cqw;height:32cqw"></i>
+              <i class="cdot" style="left:73%;top:10.5%;width:3.4cqw;height:3.4cqw"></i>
+              <i class="circ" style="left:26.4%;top:42%;width:3.2cqw;height:3.2cqw"></i>
+              <i class="circ" style="left:-8%;top:58%;width:15cqw;height:15cqw"></i>
+              <span class="ttl">Certificate<br>Of Achievement.</span>
+              <span class="glare"></span>
+            </span></span>
+          </span>
+        </span>
+      </button>
+    </div>
+
+    <div class="row">
+      <div class="slot decor k-brown" style="--w:28;--h:290" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Probability</span></span></div>
+      <div class="slot decor k-char" style="--w:30;--h:310" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Optimization</span></span></div>
+
+      <!-- Skills & Methods: spiral notebook -->
+      <button class="slot b-skills" data-id="skills" style="--w:100;--h:370;--d:270" aria-label="Skills and methods">
+        <span class="book">
+          <span class="face spine sp-note"><span class="tape"><span class="t">Skills &amp; Methods</span></span></span>
+          <span class="face cover cv-note">
+            <span class="ck">Notebook &middot; Vol. 1</span>
+            <span class="lab"><b>Skills &amp; Methods</b><small>Tools &middot; Analytical methods</small></span>
+            <span></span>
+          </span>
+        </span>
+      </button>
+
+      <div class="slot decor k-pink" style="--w:28;--h:270" aria-hidden="true"><span class="flat"><i class="ring"></i><span class="t">Linear Algebra</span></span></div>
+    </div>
+  </div>
+
+  <p class="hint" id="hint">Hover a book to pull it out &middot; click to open</p>
+</main>
+
+<section class="reader" id="reader" aria-label="Open book">
+  <div class="lp">
+    <div>
+      <h2 id="lpT"></h2>
+      <p class="lp-s" id="lpS"></p>
+    </div>
+    <button class="back" id="back">&larr; Back to the shelf</button>
+  </div>
+  <div class="paper" id="paper"><div class="doc" id="doc"></div></div>
+</section>
+
+<div class="cert-lightbox" data-cert-lightbox hidden role="dialog" aria-modal="true" aria-label="Enlarged certificate">
+  <button class="cert-lightbox-close" type="button" data-close-cert aria-label="Close enlarged certificate">&times;</button>
+  <img data-cert-lightbox-image alt="">
+</div>
+
+<!-- ============ contents (sample text: replace with your own) ============ -->
+<template id="t-about">
+  <p class="eyebrow">About me</p>
+  <h2>Hello, I'm Yixuan Wang.</h2>
+  <div class="two">
+    <div>
+      <p>I am an undergraduate at the University of North Carolina at Chapel Hill pursuing B.S. degrees in Statistics and Economics, with an expected graduation date of December 2026. I hold a 4.0/4.0 GPA and have been named to the Dean's List for three consecutive years. My relevant coursework includes Stochastic Modeling, Probability, Optimization, Linear Algebra, Econometrics and Data Science.</p>
+      <p>I plan to pursue a master's degree in Data Science. My research interests include AI for social impact and multivariate methods, with a broader interest in developing quantitative approaches that can address real-world social problems.</p>
+    </div>
+    <aside>
+      <dl>
+        <div><dt>University</dt><dd>University of North Carolina at Chapel Hill</dd></div>
+        <div><dt>Degrees</dt><dd>B.S. in Statistics<br>B.S. in Economics</dd></div>
+        <div><dt>Expected graduation</dt><dd>December 2026</dd></div>
+      </dl>
+    </aside>
+  </div>
+</template>
+
+<template id="t-skills">
+  <p class="eyebrow">Skills &amp; methods</p>
+  <h2>Technical toolkit and demonstrated methods</h2>
+  <div class="grid2">
+    <div>
+      <h3>Technical skills</h3>
+      <div class="group"><h4>Programming &amp; data</h4><div class="chips"><span>Python</span><span>R</span><span>SQL</span></div></div>
+      <div class="group"><h4>Statistical software</h4><div class="chips"><span>Stata</span><span>MATLAB</span><span>SPSS</span></div></div>
+      <div class="group"><h4>Visualization &amp; reporting</h4><div class="chips"><span>ggplot2</span><span>Tableau</span><span>Power BI</span><span>LaTeX</span><span>Figma</span></div></div>
+    </div>
+    <div>
+      <h3>Demonstrated methods</h3>
+      <div class="group"><h4>Predictive modeling</h4><p>Temporal train/test splitting, feature engineering, cross-validation, regularization and model diagnostics.</p></div>
+      <div class="group"><h4>Unsupervised learning</h4><p>K-means clustering, principal component analysis and interpretable profile development.</p></div>
+      <div class="group"><h4>Robust analysis</h4><p>Sensitivity analysis, model comparison and interactive data visualization for communicating uncertainty.</p></div>
+    </div>
+  </div>
+</template>
+
+<template id="t-certs">
+  <p class="eyebrow">Certificates</p>
+  <h2>Certifications</h2>
+  <div class="cert-grid">
+    <button class="cert-card" type="button" data-cert-src="certificates/oracle-agentic-ai-foundations-v2.png" aria-label="Enlarge Agentic AI Certified Foundations Associate certificate">
+      <div class="cert-visual"><img src="certificates/oracle-agentic-ai-foundations-v2.png" alt="Agentic AI Certified Foundations Associate certificate for Yixuan Wang" loading="lazy"></div>
+    </button>
+    <button class="cert-card" type="button" data-cert-src="certificates/oracle-oci-ai-foundations-v2.png" aria-label="Enlarge Oracle Cloud Infrastructure Certified AI Foundations Associate certificate">
+      <div class="cert-visual"><img src="certificates/oracle-oci-ai-foundations-v2.png" alt="Oracle Cloud Infrastructure Certified AI Foundations Associate certificate for Yixuan Wang" loading="lazy"></div>
+    </button>
+    <button class="cert-card" type="button" data-cert-src="certificates/kaggle-intermediate-machine-learning.jpg" aria-label="Enlarge Kaggle Intermediate Machine Learning certificate">
+      <div class="cert-visual"><img src="certificates/kaggle-intermediate-machine-learning.jpg" alt="Kaggle Intermediate Machine Learning certificate for Yixuan Wang" loading="lazy"></div>
+    </button>
+  </div>
+</template>
+
+<script>
+(function(){
+  var META = {
+    about:    { t:'About me',          s:'A brief academic background' },
+    projects: { t:'Projects',          s:'' },
+    skills:   { t:'Skills & Methods',s:'Technical toolkit and demonstrated analytical methods' },
+    certs:    { t:'Certificates',      s:'Credentials and training' }
+  };
+
+  /* ---- one entry per project folder; add or remove entries freely ---- */
+  var PROJECTS = [
+    { kind:'odis', name:'Beyond the Score', c:'#b6cbb8', tx:'72%', tag:'2026 · Explainable ML & data visualization', sub:'Understanding community stress and resource needs' },
+
+    { kind:'hate-crimes', name:'NYC Hate Crime Forecasting', c:'#b7d1e6', tx:'40%', tag:'2025 · Predictive modeling & temporal analysis', sub:'Predicting and understanding reported hate-crime patterns in New York City' },
+
+    { kind:'stress-models', name:'What Do Stress Models Miss?', c:'#d7c5b8', tx:'8%', tag:'2026 · NLP, model evaluation & structured error analysis', sub:'Validating Recurring Failure Patterns Across Pre-trained Language Models' }
+  ];
+
+  var DEFAULT_HINT = 'Hover a book to pull it out · click to open';
+  var shelf = document.getElementById('shelf');
+  var hint = document.getElementById('hint');
+  var reader = document.getElementById('reader');
+  var paper = document.getElementById('paper');
+  var doc = document.getElementById('doc');
+  var slots = Array.prototype.slice.call(document.querySelectorAll('button.slot[data-id]'));
+  var navBtns = Array.prototype.slice.call(document.querySelectorAll('.nv'));
+  var active = null, activeAt = 0, leaveT = null, current = null, busy = false;
+  var order = [], stackRO = null;
+
+  function slotFor(id){ return slots.filter(function(s){ return s.dataset.id === id; })[0]; }
+  function isOpen(){ return reader.classList.contains('show'); }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+
+  function measure(){
+    slots.forEach(function(s){
+      var cx = s.offsetLeft + s.offsetWidth / 2;
+      s.style.setProperty('--dx', (shelf.clientWidth / 2 - cx) + 'px');
+    });
+  }
+
+  function activate(id){
+    clearTimeout(leaveT);
+    if (active === id) return;
+    active = id; activeAt = performance.now();
+    slots.forEach(function(s){ s.classList.toggle('active', s.dataset.id === id); });
+    navBtns.forEach(function(b){ b.classList.toggle('on', b.dataset.id === id); });
+    shelf.classList.add('has-active');
+    hint.textContent = META[id].t + ' · click to open';
+  }
+  function deactivate(){
+    active = null;
+    slots.forEach(function(s){ s.classList.remove('active'); });
+    navBtns.forEach(function(b){ b.classList.remove('on'); });
+    shelf.classList.remove('has-active');
+    hint.textContent = DEFAULT_HINT;
+  }
+  function scheduleLeave(){
+    clearTimeout(leaveT);
+    leaveT = setTimeout(function(){ if (!isOpen()) deactivate(); }, 160);
+  }
+
+  function closeCertLightbox(){
+    var box = document.querySelector('[data-cert-lightbox]');
+    if (!box || box.hidden) return false;
+    box.hidden = true;
+    var image = box.querySelector('[data-cert-lightbox-image]');
+    if (image) { image.removeAttribute('src'); image.alt = ''; }
+    return true;
+  }
+
+  function setRect(slot){
+    var r = slot.querySelector('.cover').getBoundingClientRect();
+    var rb = reader.getBoundingClientRect();
+    reader.style.setProperty('--ct', Math.max(0, r.top - rb.top) + 'px');
+    reader.style.setProperty('--cl', Math.max(0, r.left - rb.left) + 'px');
+    reader.style.setProperty('--cr', Math.max(0, rb.right - r.right) + 'px');
+    reader.style.setProperty('--cb', Math.max(0, rb.bottom - r.bottom) + 'px');
+  }
+
+  /* ---- charts ---- */
+  function chartSVG(c){
+    var W = 640, H = 300, L = 40, T = 28, B = 262;
+    var multi = c.type === 'line';
+    var R = multi ? 566 : 620;
+    var n = c.labels.length;
+    var y = function(v){ return B - (B - T) * v / c.max; };
+    var g = '<text x="' + L + '" y="12">' + c.unit + '</text>';
+    c.ticks.forEach(function(t){
+      g += '<line x1="' + L + '" x2="' + R + '" y1="' + y(t) + '" y2="' + y(t) + '" style="stroke:var(--line)"/>' +
+           '<text x="' + (L - 8) + '" y="' + (y(t) + 4) + '" text-anchor="end">' + t + '</text>';
+    });
+    if (c.type === 'bar'){
+      var step = (R - L) / n, bw = step * 0.56;
+      c.labels.forEach(function(lb, i){
+        var v = c.series[0].v[i], x = L + step * i + (step - bw) / 2;
+        g += '<rect x="' + x + '" y="' + y(v) + '" width="' + bw + '" height="' + (B - y(v)) + '" rx="2" style="fill:' + c.series[0].c + '"/>' +
+             '<text x="' + (x + bw / 2) + '" y="' + (y(v) - 6) + '" text-anchor="middle">' + v + '</text>' +
+             '<text x="' + (x + bw / 2) + '" y="' + (B + 20) + '" text-anchor="middle">' + lb + '</text>';
+      });
+    } else {
+      var x = function(i){ return L + (R - L) * i / (n - 1); };
+      c.labels.forEach(function(lb, i){ g += '<text x="' + x(i) + '" y="' + (B + 20) + '" text-anchor="middle">' + lb + '</text>'; });
+      c.series.forEach(function(s){
+        var pts = s.v.map(function(v, i){ return x(i) + ',' + y(v); }).join(' ');
+        var e = s.v.length - 1;
+        g += '<polyline points="' + pts + '" fill="none" stroke-width="2.5" stroke-linejoin="round" style="stroke:' + s.c + '"/>' +
+             '<circle cx="' + x(e) + '" cy="' + y(s.v[e]) + '" r="4" style="fill:' + s.c + '"/>' +
+             '<text class="lbl" x="' + (x(e) + 10) + '" y="' + (y(s.v[e]) + 4) + '" style="fill:' + s.c + '">' + s.n + '</text>';
+      });
+    }
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + c.unit + '">' + g + '</svg>';
+  }
+
+  /* ---- project folders ---- */
+  function odisProjHTML(p){
+    return '<div class="fbody odis-case">' +
+      '<p class="eyebrow">' + p.tag + '</p><div class="ph">' + p.name + '</div><p class="psub">' + p.sub + '</p>' +
+      '<span class="project-badge">2nd Place · Carolina Data Challenge 2026 · Social Science Track</span>' +
+      '<div class="tabs" role="tablist">' +
+        '<button role="tab" aria-selected="true" data-tab="motivation">Motivation</button>' +
+        '<button role="tab" aria-selected="false" data-tab="viz">Visualization</button>' +
+        '<button role="tab" aria-selected="false" data-tab="code">Partial Code</button>' +
+        '<button role="tab" aria-selected="false" data-tab="output">Interactive map</button>' +
+      '</div>' +
+      '<div data-panel="motivation">' +
+        '<p class="lead">A single composite score is useful for summarizing complex conditions, but that compression inevitably removes the fine-grained differences between communities. Once policymakers prioritize one domain over another, the ranking is no longer neutral: the chosen weights can amplify some needs and obscure others, so I used sensitivity analysis and K-means archetypes to preserve those patterns and support more targeted policy design.</p>' +
+        '<div class="odis-question-grid">' +
+          '<p class="odis-question">How much do school-community rankings change when policymakers assign different priorities to the five domains?</p>' +
+          '<p class="odis-question">Can K-means archetypes preserve the fine-grained patterns needed to design different policy responses?</p>' +
+        '</div>' +
+      '</div>' +
+      '<div data-panel="viz" hidden>' +
+        '<figure class="odis-figure"><img src="projects/odis/figures/model-selection.png" alt="Line charts comparing silhouette score and adjusted Rand index across candidate cluster counts" loading="lazy"><figcaption>K=4 produced the highest silhouette score, while K=6 preserved more interpretable distinctions and remained highly stable across random initializations (mean adjusted Rand index 0.9684).</figcaption></figure>' +
+        '<figure class="odis-figure"><img src="projects/odis/figures/cluster-profiles.png" alt="Heatmap comparing economic, education, health, housing and crime scores across six school-community stress archetypes" loading="lazy"><figcaption>Six interpretable stress archetypes reveal the different structures hidden inside a single composite score. The cells show each archetype&rsquo;s average ODIS domain score on the 0–100 scale.</figcaption></figure>' +
+        '<div class="odis-figure-grid">' +
+          '<figure class="odis-figure"><img src="projects/odis/figures/pca-clusters.png" alt="PCA scatter plot showing six school-community stress archetypes" loading="lazy"><figcaption>A two-dimensional PCA view explains 72.3% of total variation. PCA supports visualization only; clustering used all five standardized domains.</figcaption></figure>' +
+          '<figure class="odis-figure"><img src="projects/odis/figures/resource-alignment.png" alt="County school-community stress plotted against public-school spending per student" loading="lazy"><figcaption>County-level LiNC resource data were added after clustering as contextual information rather than as model inputs.</figcaption></figure>' +
+        '</div>' +
+      '</div>' +
+      '<div data-panel="code" hidden>' +
+        '<p>Selected excerpts from the project, lightly condensed and renamed for readability.</p>' +
+        '<div class="odis-code-block"><h3>Recalculate a school&rsquo;s score</h3><p>The selected weights are automatically renormalized when a domain is missing, matching the scoring logic used by the interactive map.</p>' +
+          '<pre class="odis-code"><code><span class="kw">function</span> <span class="fn">communityStressScore</span>(domainScores, weights) {&#10;  let weightedTotal = 0;&#10;  let availableWeight = 0;&#10;&#10;  domainScores.forEach((score, index) =&gt; {&#10;    if (score == null) return;&#10;    weightedTotal += score * weights[index];&#10;    availableWeight += weights[index];&#10;  });&#10;&#10;  return availableWeight&#10;    ? weightedTotal / availableWeight&#10;    : null;&#10;}</code></pre></div>' +
+        '<div class="odis-code-block"><h3>Compare candidate cluster counts</h3><p>Each value of K is evaluated for both separation and stability instead of being chosen from a single metric.</p>' +
+          '<pre class="odis-code"><code><span class="kw">def</span> <span class="fn">evaluate_cluster_count</span>(features, k):&#10;    reference = KMeans(&#10;        n_clusters=k, n_init=<span class="num">50</span>, random_state=<span class="num">2026</span>&#10;    )&#10;    labels = reference.fit_predict(features)&#10;&#10;    stability = []&#10;    for seed in range(<span class="num">20</span>):&#10;        candidate = KMeans(n_clusters=k, n_init=<span class="num">10</span>, random_state=seed)&#10;        candidate_labels = candidate.fit_predict(features)&#10;        stability.append(adjusted_rand_score(labels, candidate_labels))&#10;&#10;    return {&#10;        "k": k,&#10;        "silhouette": silhouette_score(features, labels),&#10;        "mean_seed_ari": np.mean(stability),&#10;        "minimum_cluster_size": np.bincount(labels).min(),&#10;    }</code></pre></div>' +
+        '<div class="odis-code-block"><h3>Fit the final archetypes</h3><p>The final model uses all five standardized domains; PCA is calculated separately for the two-dimensional visualization.</p>' +
+          '<pre class="odis-code"><code><span class="kw">def</span> <span class="fn">fit_archetypes</span>(schools):&#10;    imputer = SimpleImputer(strategy="median")&#10;    scaler = StandardScaler()&#10;&#10;    complete = imputer.fit_transform(schools[DOMAINS])&#10;    features = scaler.fit_transform(complete)&#10;&#10;    model = KMeans(&#10;        n_clusters=<span class="num">6</span>, n_init=<span class="num">50</span>, random_state=<span class="num">2026</span>&#10;    )&#10;    cluster_ids = model.fit_predict(features)&#10;&#10;    projection = PCA(n_components=<span class="num">2</span>).fit_transform(features)&#10;    return cluster_ids, projection, model.cluster_centers_</code></pre></div>' +
+      '</div>' +
+      '<div data-panel="output" hidden>' +
+        '<p class="lead">The interactive map recalculates each school community&rsquo;s score as the five ODIS domain weights change. Users can compare current stress, change from equal weights and overall sensitivity, then select a school for its detailed profile.</p>' +
+        '<div class="odis-map-shell"><iframe src="projects/odis/map/index.html" title="Interactive ODIS weight sensitivity map" loading="lazy"></iframe></div>' +
+        '<div class="odis-map-actions"><p class="cap">The map contains 588 successfully geocoded North Carolina public high schools.</p><a href="projects/odis/map/index.html" target="_blank" rel="noopener">Open the interactive map</a></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function hateCrimesProjHTML(p){
+    return '<div class="fbody hate-case">' +
+      '<p class="eyebrow">' + p.tag + '</p><div class="ph">' + p.name + '</div><p class="psub">' + p.sub + '</p>' +
+      '<div class="tabs" role="tablist">' +
+        '<button role="tab" aria-selected="true" data-tab="motivation">Motivation</button>' +
+        '<button role="tab" aria-selected="false" data-tab="viz">Visualization</button>' +
+        '<button role="tab" aria-selected="false" data-tab="code">Partial Code</button>' +
+      '</div>' +
+      '<div data-panel="motivation">' +
+        '<p class="lead">Forecasting when reported hate-crime incidents may surge can help city agencies and community organizations respond faster, plan resources and design more timely interventions. Using NYPD records from 2019–2023, this project tested whether daily incident counts in 2024 could be predicted while also examining how reports targeting Asian, Black and Jewish communities shifted around major societal events. The goal was to turn historical patterns into actionable evidence without treating a forecast as certainty.</p>' +
+      '</div>' +
+      '<div data-panel="viz" hidden>' +
+        '<figure class="hate-viz-hero"><div class="hate-viz-frame"><img data-hate-animation src="projects/hate-crimes/figures/bias-trends-animated.gif" alt="Animated monthly trends in reported Anti-Asian, Anti-Black and Anti-Jewish hate crimes in New York City from 2019 to 2024"></div><button class="hate-replay" type="button" data-replay-hate aria-label="Replay the animated trend visualization">&#8635; Replay animation</button><figcaption>The animated timeline reveals when each bias-motive series changes, rather than compressing six years into one average. It is reproduced directly from the project report.</figcaption></figure>' +
+        '<h3 class="hate-section-title">Model comparison</h3>' +
+        '<div class="hate-model-grid">' +
+          '<figure><img src="projects/hate-crimes/figures/lasso-daily.png" alt="Actual and Lasso-predicted daily hate-crime counts in 2024" loading="lazy"><figcaption>Lasso achieved the lower average error (MAE 1.66; RMSE 2.06), but its smoother predictions understate sharp daily spikes.</figcaption></figure>' +
+          '<figure><img src="projects/hate-crimes/figures/stepwise-daily.png" alt="Actual and stepwise-regression-predicted daily hate-crime counts in 2024" loading="lazy"><figcaption>Stepwise regression had higher error (MAE 2.00; RMSE 2.34), yet reacted more visibly to short-term variation.</figcaption></figure>' +
+        '</div>' +
+        '<h3 class="hate-section-title">Event-window context</h3>' +
+        '<div class="hate-event-grid">' +
+          '<figure><img src="projects/hate-crimes/figures/covid-window.png" alt="Hate-crime trends with the COVID-19 period shaded" loading="lazy"><figcaption>Anti-Asian reports rose sharply within the broader COVID-19 window, peaking around March 2021.</figcaption></figure>' +
+          '<figure><img src="projects/hate-crimes/figures/blm-window.png" alt="Hate-crime trends with the 2020 Black Lives Matter protest period shaded" loading="lazy"><figcaption>Anti-Black reports increased around the late-May to July 2020 protest window; the chart shows coincidence, not causation.</figcaption></figure>' +
+          '<figure><img src="projects/hate-crimes/figures/israel-palestine-window.png" alt="Hate-crime trends with the late-2023 Israel-Palestine conflict period shaded" loading="lazy"><figcaption>Anti-Jewish reports were elevated around late 2023. This view treats the conflict window as context rather than a causal claim.</figcaption></figure>' +
+        '</div>' +
+      '</div>' +
+      '<div data-panel="code" hidden>' +
+        '<p>Selected R excerpts, condensed and renamed for readability.</p>' +
+        '<div class="odis-code-block"><h3>Build stable categorical features</h3><p>Each feature keeps its three most frequent training levels; uncommon values are grouped into Other to limit overfitting.</p>' +
+          '<pre class="odis-code"><code><span class="kw">make_top_levels</span> &lt;- function(train, test, column, n = <span class="num">3</span>) {&#10;  keep &lt;- train |&gt;&#10;    count(.data[[column]], sort = TRUE) |&gt;&#10;    slice_head(n = n) |&gt;&#10;    pull(<span class="num">1</span>)&#10;&#10;  recode_level &lt;- function(x) if_else(x %in% keep, x, <span class="str">"Other"</span>)&#10;  list(train = recode_level(train[[column]]),&#10;       test  = recode_level(test[[column]]))&#10;}</code></pre></div>' +
+        '<div class="odis-code-block"><h3>Evaluate Lasso on the 2024 holdout</h3><p>The penalty is chosen by cross-validation on 2019–2023 data, while 2024 remains an untouched test period.</p>' +
+          '<pre class="odis-code"><code>x_train &lt;- model.matrix(daily_count ~ ., train_features)[, -<span class="num">1</span>]&#10;x_test  &lt;- model.matrix(daily_count ~ ., test_features)[, -<span class="num">1</span>]&#10;&#10;lasso_cv &lt;- cv.glmnet(&#10;  x_train, train_features$daily_count,&#10;  alpha = <span class="num">1</span>, nfolds = <span class="num">10</span>&#10;)&#10;&#10;prediction &lt;- predict(lasso_cv, x_test, s = <span class="str">"lambda.min"</span>)&#10;mae  &lt;- mean(abs(test_features$daily_count - prediction))&#10;rmse &lt;- sqrt(mean((test_features$daily_count - prediction)^<span class="num">2</span>))</code></pre></div>' +
+        '<div class="odis-code-block"><h3>Prepare the animated trend</h3><p>The same monthly summary feeds the animation and the three event-window views.</p>' +
+          '<pre class="odis-code"><code>monthly_trends &lt;- incidents |&gt;&#10;  filter(bias_motive %in% c(<span class="str">"ANTI-ASIAN"</span>, <span class="str">"ANTI-BLACK"</span>, <span class="str">"ANTI-JEWISH"</span>)) |&gt;&#10;  mutate(month = floor_date(complaint_date, <span class="str">"month"</span>)) |&gt;&#10;  count(month, bias_motive, name = <span class="str">"incidents"</span>) |&gt;&#10;  complete(month, bias_motive, fill = list(incidents = <span class="num">0</span>))</code></pre></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function stressModelsProjHTML(p){
+    return '<div class="fbody stress-case">' +
+      '<p class="eyebrow">' + p.tag + '</p><div class="ph">' + p.name + '</div><p class="psub">' + p.sub + '</p>' +
+      '<span class="project-badge">Ongoing · preliminary model comparison complete</span>' +
+      '<div class="tabs" role="tablist">' +
+        '<button role="tab" aria-selected="true" data-tab="motivation">Motivation</button>' +
+        '<button role="tab" aria-selected="false" data-tab="viz">Visualization</button>' +
+        '<button role="tab" aria-selected="false" data-tab="code">Partial Code</button>' +
+      '</div>' +
+      '<div data-panel="motivation">' +
+        '<p>Automated emotion and distress detection is increasingly used in online support and mental-health applications. However, overall accuracy and F1 scores can hide systematic differences in how models recognize different expressions of distress. Stress may be conveyed through physical symptoms, emotional numbness, or positive framing, without explicitly negative language.</p>' +
+        '<p>Our project examines whether these patterns recur in Dreaddit, an independent, human-annotated stress dataset. We compare VADER with fine-tuned XLNet and MentalBERT classifiers and analyze missed stress cases to assess whether these patterns persist across models.</p>' +
+      '</div>' +
+      '<div data-panel="viz" hidden>' +
+        '<figure class="stress-slide"><img src="projects/stress-models/figures/model-performance.png" alt="Model performance comparison for VADER, XLNet and MentalBERT" loading="lazy"><figcaption>VADER serves as the baseline at thresholds of −0.5 and −0.05. Its F1 score improves from 0.67 to 0.71, but remains about 10 points below the fine-tuned transformers; MentalBERT achieves the highest recall at approximately 88%.</figcaption></figure>' +
+        '<figure class="stress-slide"><img src="projects/stress-models/figures/error-types.png" alt="False-negative and false-positive counts across four model configurations" loading="lazy"><figcaption>False negatives fall from 148 under VADER at −0.5 to 46 under MentalBERT, while false positives range from 69 to 104. MentalBERT misses the fewest stress-labeled posts, though it produces more false positives than XLNet.</figcaption></figure>' +
+      '</div>' +
+      '<div data-panel="code" hidden>' +
+        '<p>Selected excerpts from the current workflow, condensed and renamed for readability.</p>' +
+        '<div class="odis-code-block"><h3>Keep the strongest XLNet checkpoint</h3><p>The classifier is selected by validation F1 rather than the final training epoch, then evaluated once on the held-out test set.</p>' +
+          '<pre class="odis-code"><code>best_f1 = <span class="num">0</span>&#10;best_state = None&#10;&#10;<span class="kw">for</span> epoch <span class="kw">in</span> range(<span class="num">3</span>):&#10;    <span class="fn">train_one_epoch</span>(model, train_loader, optimizer, scheduler)&#10;    labels, predictions = <span class="fn">evaluate</span>(model, validation_loader)&#10;    validation_f1 = f1_score(labels, predictions)&#10;&#10;    <span class="kw">if</span> validation_f1 &gt; best_f1:&#10;        best_f1 = validation_f1&#10;        best_state = deepcopy(model.state_dict())&#10;&#10;model.load_state_dict(best_state)</code></pre></div>' +
+        '<div class="odis-code-block"><h3>Find recurring shared misses</h3><p>Model outputs are aligned by post ID so the qualitative review can begin with stress-labeled examples missed by every configuration.</p>' +
+          '<pre class="odis-code"><code>prediction_columns = [&#10;    <span class="str">"prediction_0.5"</span>, <span class="str">"prediction_0.05"</span>,&#10;    <span class="str">"pred_xlnet"</span>, <span class="str">"pred_mentalbert"</span>&#10;]&#10;&#10;shared_misses = results.loc[&#10;    results[<span class="str">"label"</span>].eq(<span class="num">1</span>)&#10;    &amp; results[prediction_columns].eq(<span class="num">0</span>).all(axis=<span class="num">1</span>)&#10;]&#10;&#10;assert len(shared_misses) == <span class="num">18</span></code></pre></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function projHTML(p){
+    if (p.kind === 'odis') return odisProjHTML(p);
+    if (p.kind === 'hate-crimes') return hateCrimesProjHTML(p);
+    if (p.kind === 'stress-models') return stressModelsProjHTML(p);
+    var rows = p.out.map(function(r){ return '<li><span class="y">' + r[0] + '</span><div><b>' + r[1] + '</b><span class="s">' + r[2] + '</span></div></li>'; }).join('');
+    var chips = p.tools.map(function(t){ return '<span>' + t + '</span>'; }).join('');
+    return '<div class="fbody">' +
+      '<p class="eyebrow">' + p.tag + '</p><div class="ph">' + p.name + '</div><p class="psub">' + p.sub + '</p>' +
+      '<div class="tabs" role="tablist">' +
+        '<button role="tab" aria-selected="true" data-tab="motivation">Motivation</button>' +
+        '<button role="tab" aria-selected="false" data-tab="viz">Visualization</button>' +
+        '<button role="tab" aria-selected="false" data-tab="output">Output</button>' +
+        '<button role="tab" aria-selected="false" data-tab="notes">Methods</button>' +
+      '</div>' +
+      '<div data-panel="motivation"><p class="lead">' + p.lead + '</p><p>' + p.why + '</p><h3>The question</h3><p>' + p.q + '</p></div>' +
+      '<div data-panel="viz" hidden><div class="chart">' + chartSVG(p.chart) + '</div><p class="cap">Sample figure. Replace it with your own visualization: a screenshot, an exported SVG, or a short screen recording.</p><p>' + p.vizNote + '</p></div>' +
+      '<div data-panel="output" hidden><ul class="rows">' + rows + '</ul><h3>Result</h3><p>' + p.result + '</p></div>' +
+      '<div data-panel="notes" hidden><h3>Tools</h3><div class="chips">' + chips + '</div><h3>What I learned</h3><p>' + p.learned + '</p><h3>What I would do next</h3><p>' + p.next + '</p></div>' +
+    '</div>';
+  }
+
+  function buildStack(){
+    var html = '<p class="eyebrow">Projects</p><h2>Pick a folder</h2>' +
+      '<div class="stack" id="stack">';
+    PROJECTS.forEach(function(p, i){
+      var num = (i < 9 ? '0' : '') + (i + 1);
+      html += '<div class="fold" data-p="' + i + '" style="--fc:' + p.c + ';--tx:' + p.tx + '">' +
+        '<button class="ftab" aria-label="Project ' + num + ': ' + p.name + '">' + num + ' ' + p.name + '</button>' + projHTML(p) + '</div>';
+    });
+    html += '</div>';
+    doc.innerHTML = html;
+    order = PROJECTS.map(function(_, i){ return i; }).reverse();
+    placeFolds();
+  }
+  function sizeStack(){
+    var stack = doc.querySelector('.stack'); if (!stack || !order.length) return;
+    var front = stack.querySelectorAll('.fold')[order[order.length - 1]];
+    var body = front.querySelector('.fbody');
+    var band = parseFloat(getComputedStyle(stack).getPropertyValue('--band')) || 52;
+    stack.style.height = ((order.length - 1) * band + 20 + body.offsetHeight + 14) + 'px';
+  }
+  function placeFolds(){
+    var stack = doc.querySelector('.stack'); if (!stack) return;
+    var folds = stack.querySelectorAll('.fold');
+    order.forEach(function(pi, pos){
+      folds[pi].style.setProperty('--p', pos);
+      folds[pi].classList.toggle('front', pos === order.length - 1);
+    });
+    sizeStack();
+    if (window.ResizeObserver){
+      if (stackRO) stackRO.disconnect();
+      stackRO = new ResizeObserver(sizeStack);
+      stackRO.observe(folds[order[order.length - 1]].querySelector('.fbody'));
+    }
+  }
+  function selectFold(pi){
+    order = order.filter(function(x){ return x !== pi; }).concat(pi);
+    placeFolds();
+  }
+
+  function fill(id){
+    reader.dataset.book = id;
+    document.getElementById('lpT').textContent = META[id].t;
+    document.getElementById('lpS').textContent = META[id].s;
+    if (stackRO) { stackRO.disconnect(); stackRO = null; }
+    if (id === 'projects'){
+      buildStack();
+    } else {
+      doc.innerHTML = '';
+      doc.appendChild(document.getElementById('t-' + id).content.cloneNode(true));
+    }
+    paper.scrollTop = 0;
+    current = id;
+    navBtns.forEach(function(b){ b.classList.toggle('on', b.dataset.id === id); });
+  }
+
+  async function openBook(id){
+    if (busy) return;
+    if (isOpen()){
+      if (id === current) return;
+      busy = true;
+      activate(id);
+      reader.classList.add('swap');
+      await sleep(240);
+      fill(id);
+      reader.classList.remove('swap');
+      busy = false;
+      return;
+    }
+    busy = true;
+    activate(id);
+    await sleep(Math.max(0, 560 - (performance.now() - activeAt)));
+    fill(id);
+    setRect(slotFor(id));
+    reader.classList.add('show');
+    void reader.offsetWidth;
+    reader.classList.add('open');
+    document.body.classList.add('reading');
+    document.getElementById('back').focus({ preventScroll:true });
+    await sleep(900);
+    sizeStack();
+    busy = false;
+  }
+
+  async function closeBook(){
+    if (!isOpen() || busy) return;
+    busy = true;
+    var s = slotFor(current);
+    if (active !== current) { activate(current); await sleep(560); }
+    setRect(s);
+    reader.classList.remove('open');
+    document.body.classList.remove('reading');
+    await sleep(850);
+    reader.classList.remove('show');
+    if (s) s.focus({ preventScroll:true });
+    await sleep(60);
+    deactivate();
+    if (s) s.blur();
+    busy = false;
+  }
+
+  slots.forEach(function(s){
+    s.addEventListener('pointerenter', function(){ if (!isOpen()) activate(s.dataset.id); });
+    s.addEventListener('focus', function(){ if (!isOpen()) activate(s.dataset.id); });
+    s.addEventListener('click', function(){ openBook(s.dataset.id); });
+  });
+  shelf.addEventListener('pointerenter', function(){ clearTimeout(leaveT); });
+  shelf.addEventListener('pointerleave', scheduleLeave);
+
+  navBtns.forEach(function(b){
+    b.addEventListener('pointerenter', function(){ if (!isOpen()) activate(b.dataset.id); });
+    b.addEventListener('pointerleave', function(){ if (!isOpen()) scheduleLeave(); });
+    b.addEventListener('click', function(){ openBook(b.dataset.id); });
+  });
+
+  document.getElementById('back').addEventListener('click', closeBook);
+  document.getElementById('mark').addEventListener('click', closeBook);
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape') return;
+    if (!closeCertLightbox()) closeBook();
+  });
+
+  doc.addEventListener('click', function(e){
+    var cert = e.target.closest('[data-cert-src]');
+    if (cert){
+      var box = document.querySelector('[data-cert-lightbox]');
+      var image = box && box.querySelector('[data-cert-lightbox-image]');
+      if (box && image){
+        image.src = cert.dataset.certSrc;
+        image.alt = cert.querySelector('img').alt;
+        box.hidden = false;
+        box.querySelector('[data-close-cert]').focus();
+      }
+      return;
+    }
+    var replay = e.target.closest('[data-replay-hate]');
+    if (replay){
+      var img = replay.parentNode.querySelector('[data-hate-animation]');
+      if (img){
+        var src = img.getAttribute('src').split('?')[0];
+        img.setAttribute('src', src + '?replay=' + Date.now());
+      }
+      return;
+    }
+    var b = e.target.closest('[data-tab]');
+    if (b){
+      var scope = b.closest('.fbody') || doc;
+      scope.querySelectorAll('[data-tab]').forEach(function(t){ t.setAttribute('aria-selected', t === b ? 'true' : 'false'); });
+      scope.querySelectorAll('[data-panel]').forEach(function(p){ p.hidden = p.dataset.panel !== b.dataset.tab; });
+      sizeStack();
+      return;
+    }
+    var f = e.target.closest('.fold');
+    if (f && !f.classList.contains('front')) selectFold(+f.dataset.p);
+  });
+
+  document.addEventListener('click', function(e){
+    if (e.target.closest('[data-close-cert]') || e.target.matches('[data-cert-lightbox]')) closeCertLightbox();
+  });
+
+  window.addEventListener('resize', function(){ measure(); sizeStack(); });
+  window.addEventListener('load', measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ measure(); sizeStack(); });
+  measure();
+})();
+</script>
+
+</body></html>
